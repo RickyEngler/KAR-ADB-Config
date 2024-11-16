@@ -1,0 +1,4 @@
+owner: RickyEngler
+repo: KAR-ADB-Config
+provider: github
+updaterCacheDirName: kar-adb-config-updater
