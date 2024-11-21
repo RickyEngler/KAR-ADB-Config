@@ -1,0 +1,12 @@
+# Ignorar arquivos temporários do sistema
+*.log
+*.tmp
+
+# Ignorar pastas específicas
+/node_modules/
+/dist/
+
+# Ignorar arquivos grandes ou gerados
+*.zip
+*.exe
+*.tar.gz
