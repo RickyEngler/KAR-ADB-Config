@@ -7,6 +7,7 @@ window.connect = () => {
     alert('Por favor, insira um IP válido.');
     return;
   }
+
   ipcRenderer.invoke('execute-adb-command', `connect ${ip}:5555`)
     .then((result) => {
       alert(`Conectado ao dispositivo: ${result}`);
@@ -71,6 +72,53 @@ window.executeCommand = (command) => {
     });
 };
 
+// Instalar APK do Fully Kiosk Browser
+window.installApk = async () => {
+  const apkPath = await selectFile('Selecione o APK do Fully Kiosk Browser', [
+    { name: 'APK Files', extensions: ['apk'] },
+  ]);
+
+  if (apkPath) {
+    ipcRenderer.invoke('install-apk', apkPath)
+      .then((result) => {
+        alert(`APK instalado com sucesso: ${result}`);
+        updateUIStatus(`APK instalado: ${result}`);
+      })
+      .catch((error) => {
+        alert(`Erro ao instalar o APK: ${error}`);
+        updateUIStatus(`Erro ao instalar o APK: ${error}`);
+      });
+  }
+};
+
+// Injetar Configuração Fully Kiosk Browser
+window.injectConfig = async () => {
+  const configPath = await selectFile('Selecione o arquivo de configuração JSON', [
+    { name: 'JSON Files', extensions: ['json'] },
+  ]);
+
+  if (configPath) {
+    ipcRenderer.invoke('inject-config', configPath)
+      .then((result) => {
+        alert(`Configuração injetada com sucesso: ${result}`);
+        updateUIStatus(`Configuração injetada: ${result}`);
+      })
+      .catch((error) => {
+        alert(`Erro ao injetar a configuração: ${error}`);
+        updateUIStatus(`Erro ao injetar a configuração: ${error}`);
+      });
+  }
+};
+
+// Selecionar arquivo com diálogo
+async function selectFile(title, filters) {
+  const { canceled, filePaths } = await ipcRenderer.invoke('dialog:open-file', { title, filters });
+  if (!canceled && filePaths.length > 0) {
+    return filePaths[0];
+  }
+  return null;
+}
+
 // Atualizar o status do ADB na interface
 ipcRenderer.on('adb-status', (event, status) => {
   updateUIStatus(status);
@@ -81,12 +129,12 @@ ipcRenderer.on('download-progress', (event, progress) => {
   updateUIProgress(progress);
 });
 
-// Função para atualizar o status na interface
+// Atualizar o status na interface
 const updateUIStatus = (status) => {
   document.getElementById('status').textContent = status;
 };
 
-// Função para atualizar a barra de progresso
+// Atualizar barra de progresso
 const updateUIProgress = (progress) => {
   document.getElementById('progress-bar').style.width = `${progress}%`;
   document.getElementById('progress-text').innerText = `Progresso: ${progress}%`;

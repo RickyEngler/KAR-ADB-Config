@@ -1,6 +1,6 @@
 {
   "name": "kar-adb-config",
-  "version": "1.0.7",
+  "version": "1.1.3",
   "main": "main.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",

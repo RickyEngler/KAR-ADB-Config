@@ -1,14 +1,14 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const { exec } = require('child_process');
-const https = require('https');
 const fs = require('fs');
 const path = require('path');
-const unzipper = require('unzipper');
+
+let sdkPath = ''; // Variável para armazenar o caminho do SDK
 
 function createWindow() {
   const win = new BrowserWindow({
-    width: 400,
-    height: 500,
+    width: 600,
+    height: 700,
     webPreferences: {
       preload: path.join(__dirname, 'renderer.js'),
       nodeIntegration: true,
@@ -17,76 +17,113 @@ function createWindow() {
   });
 
   win.loadFile('index.html');
-  verificarAdb(win); // Verificar o ADB ao carregar a janela
+  verificarAdb(win); // Verifica o ADB ao carregar a janela
 }
 
 // Verifica se o ADB está instalado
 function verificarAdb(win) {
-  exec('adb --version', (error, stdout, stderr) => {
-    if (error) {
-      console.log('ADB não encontrado. Baixando...');
-      win.webContents.send('adb-status', 'ADB não encontrado. Baixando...');
-      baixarAdb(win);
+  if (!sdkPath) {
+    sdkPath = recuperarSdkPath();
+  }
+
+  const adbPath = path.join(sdkPath, 'adb.exe');
+
+  if (fs.existsSync(adbPath)) {
+    exec(`"${adbPath}" --version`, (error, stdout, stderr) => {
+      if (error) {
+        console.log('Erro ao verificar o ADB:', stderr);
+        win.webContents.send('adb-status', 'Erro ao verificar o ADB.');
+      } else {
+        console.log('ADB encontrado:', stdout);
+        win.webContents.send('adb-status', 'ADB encontrado: ' + stdout);
+      }
+    });
+  } else {
+    console.log('ADB não encontrado. Solicite ao usuário.');
+    win.webContents.send('adb-status', 'ADB não encontrado. Por favor, selecione o diretório do SDK.');
+    selecionarSdk(win);
+  }
+}
+
+// Solicita ao usuário que selecione o diretório do SDK
+function selecionarSdk(win) {
+  const selectedPath = dialog.showOpenDialogSync({
+    title: 'Selecione o diretório do SDK (Platform Tools)',
+    properties: ['openDirectory'],
+  });
+
+  if (selectedPath && selectedPath[0]) {
+    sdkPath = selectedPath[0];
+    const adbPath = path.join(sdkPath, 'adb.exe');
+
+    if (fs.existsSync(adbPath)) {
+      salvarSdkPath(sdkPath);
+      win.webContents.send('adb-status', 'SDK configurado com sucesso!');
+      console.log(`SDK configurado em: ${sdkPath}`);
     } else {
-      console.log('ADB encontrado:', stdout);
-      win.webContents.send('adb-status', 'ADB encontrado: ' + stdout);
+      win.webContents.send('adb-status', 'O diretório selecionado não contém o ADB. Tente novamente.');
+      console.error('Erro: ADB não encontrado no diretório selecionado.');
     }
-  });
+  } else {
+    win.webContents.send('adb-status', 'Nenhum diretório selecionado. Ação cancelada.');
+    console.error('Nenhum caminho foi selecionado.');
+  }
 }
 
-// Faz o download do ADB com feedback de progresso
-function baixarAdb(win) {
-  const url = 'https://dl.google.com/android/repository/platform-tools-latest-windows.zip';
-  const destino = path.join(app.getPath('userData'), 'platform-tools-latest-windows.zip');
-
-  const arquivo = fs.createWriteStream(destino);
-  https.get(url, (response) => {
-    const totalSize = parseInt(response.headers['content-length'], 10);
-    let downloadedSize = 0;
-
-    response.on('data', (chunk) => {
-      downloadedSize += chunk.length;
-      const progress = ((downloadedSize / totalSize) * 100).toFixed(2);
-      win.webContents.send('download-progress', progress);
-    });
-
-    response.pipe(arquivo);
-    arquivo.on('finish', () => {
-      arquivo.close();
-      console.log('Download concluído.');
-      win.webContents.send('adb-status', 'Download concluído. Extraindo...');
-      extrairZip(destino, win);
-    });
-  });
+// Salva o caminho do SDK em um arquivo de configuração
+function salvarSdkPath(path) {
+  fs.writeFileSync('sdk-config.json', JSON.stringify({ sdkPath: path }), 'utf8');
 }
 
-// Extrai o arquivo ZIP baixado
-function extrairZip(destino, win) {
-  const extracaoDestino = path.join(app.getPath('userData'), 'platform-tools');
-
-  fs.createReadStream(destino)
-    .pipe(unzipper.Extract({ path: extracaoDestino }))
-    .on('close', () => {
-      console.log('Arquivo ZIP extraído com sucesso.');
-      win.webContents.send('adb-status', 'Arquivo ZIP extraído com sucesso.');
-      configurarAdb(extracaoDestino, win);
-    });
-}
-
-// Configura o ADB após a extração
-function configurarAdb(caminhoAdb, win) {
-  console.log(`ADB configurado no caminho: ${caminhoAdb}`);
-  win.webContents.send('adb-status', `ADB configurado no caminho: ${caminhoAdb}`);
+// Recupera o caminho do SDK de um arquivo de configuração
+function recuperarSdkPath() {
+  if (fs.existsSync('sdk-config.json')) {
+    const config = JSON.parse(fs.readFileSync('sdk-config.json', 'utf8'));
+    return config.sdkPath || '';
+  }
+  return '';
 }
 
 // Lida com os comandos ADB enviados do renderer
 ipcMain.handle('execute-adb-command', async (event, command) => {
+  const adbPath = path.join(sdkPath, 'adb.exe');
   return new Promise((resolve, reject) => {
-    exec(`adb ${command}`, (error, stdout, stderr) => {
+    exec(`"${adbPath}" ${command}`, (error, stdout, stderr) => {
       if (error) reject(stderr.trim());
       else resolve(stdout.trim());
     });
   });
+});
+
+// Lida com a instalação do APK
+ipcMain.handle('install-apk', async (event, apkPath) => {
+  const adbPath = path.join(sdkPath, 'adb.exe');
+  return new Promise((resolve, reject) => {
+    exec(`"${adbPath}" install "${apkPath}"`, (error, stdout, stderr) => {
+      if (error) reject(stderr.trim());
+      else resolve('APK instalado com sucesso!');
+    });
+  });
+});
+
+// Lida com a injeção de configuração
+ipcMain.handle('inject-config', async (event, configPath) => {
+  const adbPath = path.join(sdkPath, 'adb.exe');
+  return new Promise((resolve, reject) => {
+    exec(
+      `"${adbPath}" push "${configPath}" /sdcard/Download/fully-kiosk-config.json`,
+      (error, stdout, stderr) => {
+        if (error) reject(stderr.trim());
+        else resolve('Configuração injetada com sucesso!');
+      }
+    );
+  });
+});
+
+// Lida com a seleção de arquivos
+ipcMain.handle('dialog:open-file', async (event, options) => {
+  const result = await dialog.showOpenDialog(options);
+  return result;
 });
 
 app.whenReady().then(() => {

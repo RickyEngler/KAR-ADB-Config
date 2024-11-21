@@ -34,8 +34,17 @@
   <span class="tooltip-text">Reinicia o dispositivo</span>
     </div>
 
+  <div class="tooltip"> 
+    <button onclick="installApk()">Instalar Fully Kiosk Browser (APK)</button>
+    <span class="tooltip-text">Instala o APP DO Fully</span>
+  </div>
+
+  <div class="tooltip"> 
+    <button onclick="injectConfig()">Injetar Configuração Fully Kiosk</button>
+    <span class="tooltip-text">Configura o APP DO Fully</span>
+  </div>
+
     <div id="progress-bar"></div>
-    <p id="progress-text">Progresso: 0%</p>
     <p id="status">Status: Aguardando...</p>
 
     <script src="renderer.js"></script>
