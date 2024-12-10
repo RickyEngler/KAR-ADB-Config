@@ -7,9 +7,10 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
-  <h1>CONECTAR-SE AO DISPOSITIVO</h1>
-  <input type="text" id="ip" placeholder="Insira o IP do dispositivo" class="input">
+<div class="destaque">
+  <h1>KAR ADB CONFIG</h1>
+  <h2>CONEXÃO</h2>
+  <input type="text" id="ip" placeholder="INSIRA O IP DA DA REDE CONECTADA NA TV" class="input">
   <br>
 
   <div class="tooltip">
@@ -21,7 +22,8 @@
   <button onclick="disconnect()">DESCONECTAR DO DISPOSITIVO</button>
   <span class="tooltip-text">Desconecta do dispositivo</span>
 </div>
-
+<br>
+<br>
   <h2>INSTALAÇÃO</h2>
 
   <div class="tooltip">
@@ -35,18 +37,19 @@
     </div>
 
   <div class="tooltip"> 
-    <button onclick="installApk()">Instalar Fully Kiosk Browser (APK)</button>
-    <span class="tooltip-text">Instala o APP DO Fully</span>
+    <button onclick="installApk()">INSTALAR APLICATIVOS</button>
+    <span class="tooltip-text">Instala os apps necessários.</span>
   </div>
 
   <div class="tooltip"> 
-    <button onclick="injectConfig()">Injetar Configuração Fully Kiosk</button>
-    <span class="tooltip-text">Configura o APP DO Fully</span>
+    <button onclick="injectConfig()">CONFIGURAR FULLY</button>
+    <span class="tooltip-text">Configura o APP DO Fully pelo arquivo de configuração.</span>
   </div>
 
+    <p id="status">Status: </p>
     <div id="progress-bar"></div>
-    <p id="status">Status: Aguardando...</p>
 
     <script src="renderer.js"></script>
+  </div>
 </body>
 </html>

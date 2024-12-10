@@ -1,6 +1,5 @@
 const { ipcRenderer } = require('electron');
 
-// Conectar ao dispositivo ADB
 window.connect = () => {
   const ip = document.getElementById('ip').value;
   if (!ip) {
@@ -19,7 +18,6 @@ window.connect = () => {
     });
 };
 
-// Desconectar do dispositivo ADB
 window.disconnect = () => {
   const ip = document.getElementById('ip').value;
   ipcRenderer.invoke('execute-adb-command', `disconnect ${ip}:5555`)
@@ -33,7 +31,6 @@ window.disconnect = () => {
     });
 };
 
-// Desinstalar aplicativos pré-definidos
 window.uninstallApps = () => {
   const commands = [
     "shell pm uninstall --user 0 com.mediatek.wwtv.tvcenter",
@@ -59,7 +56,6 @@ window.uninstallApps = () => {
   alert('Processo de desinstalação iniciado.');
 };
 
-// Executar um comando ADB genérico
 window.executeCommand = (command) => {
   ipcRenderer.invoke('execute-adb-command', command)
     .then((result) => {
@@ -72,7 +68,6 @@ window.executeCommand = (command) => {
     });
 };
 
-// Instalar APK do Fully Kiosk Browser
 window.installApk = async () => {
   const apkPath = await selectFile('Selecione o APK do Fully Kiosk Browser', [
     { name: 'APK Files', extensions: ['apk'] },
@@ -91,7 +86,6 @@ window.installApk = async () => {
   }
 };
 
-// Injetar Configuração Fully Kiosk Browser
 window.injectConfig = async () => {
   const configPath = await selectFile('Selecione o arquivo de configuração JSON', [
     { name: 'JSON Files', extensions: ['json'] },
@@ -110,7 +104,6 @@ window.injectConfig = async () => {
   }
 };
 
-// Selecionar arquivo com diálogo
 async function selectFile(title, filters) {
   const { canceled, filePaths } = await ipcRenderer.invoke('dialog:open-file', { title, filters });
   if (!canceled && filePaths.length > 0) {
@@ -119,22 +112,18 @@ async function selectFile(title, filters) {
   return null;
 }
 
-// Atualizar o status do ADB na interface
 ipcRenderer.on('adb-status', (event, status) => {
   updateUIStatus(status);
 });
 
-// Atualizar o progresso do download de ADB
 ipcRenderer.on('download-progress', (event, progress) => {
   updateUIProgress(progress);
 });
 
-// Atualizar o status na interface
 const updateUIStatus = (status) => {
   document.getElementById('status').textContent = status;
 };
 
-// Atualizar barra de progresso
 const updateUIProgress = (progress) => {
   document.getElementById('progress-bar').style.width = `${progress}%`;
   document.getElementById('progress-text').innerText = `Progresso: ${progress}%`;

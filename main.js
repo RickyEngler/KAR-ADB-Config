@@ -3,7 +3,7 @@ const { exec } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
-let sdkPath = ''; // Variável para armazenar o caminho do SDK
+let sdkPath = '';
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -17,10 +17,9 @@ function createWindow() {
   });
 
   win.loadFile('index.html');
-  verificarAdb(win); // Verifica o ADB ao carregar a janela
+  verificarAdb(win);
 }
 
-// Verifica se o ADB está instalado
 function verificarAdb(win) {
   if (!sdkPath) {
     sdkPath = recuperarSdkPath();
@@ -45,7 +44,6 @@ function verificarAdb(win) {
   }
 }
 
-// Solicita ao usuário que selecione o diretório do SDK
 function selecionarSdk(win) {
   const selectedPath = dialog.showOpenDialogSync({
     title: 'Selecione o diretório do SDK (Platform Tools)',
@@ -70,12 +68,10 @@ function selecionarSdk(win) {
   }
 }
 
-// Salva o caminho do SDK em um arquivo de configuração
 function salvarSdkPath(path) {
   fs.writeFileSync('sdk-config.json', JSON.stringify({ sdkPath: path }), 'utf8');
 }
 
-// Recupera o caminho do SDK de um arquivo de configuração
 function recuperarSdkPath() {
   if (fs.existsSync('sdk-config.json')) {
     const config = JSON.parse(fs.readFileSync('sdk-config.json', 'utf8'));
@@ -84,7 +80,6 @@ function recuperarSdkPath() {
   return '';
 }
 
-// Lida com os comandos ADB enviados do renderer
 ipcMain.handle('execute-adb-command', async (event, command) => {
   const adbPath = path.join(sdkPath, 'adb.exe');
   return new Promise((resolve, reject) => {
@@ -95,7 +90,6 @@ ipcMain.handle('execute-adb-command', async (event, command) => {
   });
 });
 
-// Lida com a instalação do APK
 ipcMain.handle('install-apk', async (event, apkPath) => {
   const adbPath = path.join(sdkPath, 'adb.exe');
   return new Promise((resolve, reject) => {
@@ -106,7 +100,6 @@ ipcMain.handle('install-apk', async (event, apkPath) => {
   });
 });
 
-// Lida com a injeção de configuração
 ipcMain.handle('inject-config', async (event, configPath) => {
   const adbPath = path.join(sdkPath, 'adb.exe');
   return new Promise((resolve, reject) => {
@@ -120,7 +113,6 @@ ipcMain.handle('inject-config', async (event, configPath) => {
   });
 });
 
-// Lida com a seleção de arquivos
 ipcMain.handle('dialog:open-file', async (event, options) => {
   const result = await dialog.showOpenDialog(options);
   return result;

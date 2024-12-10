@@ -20,25 +20,20 @@
   },
   "build": {
     "files": [
-    "dist/**",
-    "main.js",
-    "renderer.js",
-    "index.html",
-    "style.css",
-    "assets/icons/icon.ico",
-    "!node_modules/.cache"],
+      "dist/**",
+      "main.js",
+      "renderer.js",
+      "index.html",
+      "style.css",
+      "assets/icons/icon.ico",
+      "!node_modules/.cache"
+    ],
     "compression": "maximum",
     "appId": "com.libertyhealth.adbconfig",
     "productName": "ADB Config",
-    
     "win": {
       "icon": "assets/icons/icon.ico",
       "target": "nsis"
-    },
-    "nsis": {
-  "oneClick": false,
-  "perMachine": true,
-  "allowToChangeInstallationDirectory": true
     }
   }
 }

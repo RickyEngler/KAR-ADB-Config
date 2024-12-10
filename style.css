@@ -1,8 +1,11 @@
+@charset "UTF-8";
+@import url('https://fonts.googleapis.com/css2?family=Wix+Madefor+Text:ital,wght@0,400..800;1,400..800&display=swap');
+
 body { 
-    font-family: Arial, sans-serif;
+    font-family: 'Wix MadeFor Text',sans-serif;
     text-align: center; 
     color: aliceblue; 
-    background-color: rgb(24, 24, 24);
+    background-color: #181818;
 }
 
 h1{
@@ -23,10 +26,11 @@ font-size: 13px;
      font-weight: 700;
      border: none;
 }
-button { margin: 10px;
+button { 
+     margin: 10px;
      padding: 10px 42px; 
      color: rgb(0, 0, 0); 
-     background-color: #36FFC0; 
+     background-color: #ff5f5f; 
      border-radius: 5px; 
      border-style: none; 
      cursor: pointer;
@@ -37,7 +41,7 @@ button { margin: 10px;
 }
 
 button:hover{
-     background-color: rgb(216, 216, 216); 
+     background-color: #ffc1c1; 
 }
 
 .contentebtn{
@@ -46,49 +50,56 @@ button:hover{
     justify-content: center;
 }
 .tooltip {
-    position: relative; /* Necessário para posicionar o tooltip */
+    position: relative;
     display: inline-block;
   }
 
-  /* Texto do tooltip */
+
   .tooltip .tooltip-text {
-    visibility: hidden; /* Inicialmente escondido */
-    background-color: #0000007a; /* Cor do fundo do balão */
-    color: #fff; /* Cor do texto */
-    text-align: center; /* Centralizar texto */
-    border-radius: 5px; /* Cantos arredondados */
-    padding: 5px 30px; /* Espaçamento interno */
-    position: absolute; /* Para posicionamento relativo ao botão */
-    z-index: 1; /* Garantir que o tooltip fique por cima */
-    bottom: 125%; /* Posição acima do botão */
-    left: 50%; /* Centralizado horizontalmente */
-    transform: translateX(-50%); /* Ajuste fino */
-    opacity: 0; /* Invisível inicialmente */
-    transition: opacity 0.3s; /* Efeito de transição ao aparecer/desaparecer */
+    visibility: hidden; 
+    background-color: #0000007a; 
+    color: #fff; 
+    text-align: center; 
+    border-radius: 5px; 
+    padding: 5px 30px; 
+    position: absolute; 
+    z-index: 1; 
+    bottom: 125%; 
+    left: 50%; 
+    transform: translateX(-50%); 
+    opacity: 0; 
+    transition: opacity 0.3s; 
   }
 
   /* Setinha do tooltip */
   .tooltip .tooltip-text::after {
     content: "";
     position: absolute;
-    top: 100%; /* Na parte de baixo do tooltip */
+    top: 100%; 
     left: 100%;
     transform: translateX(-50%);
     border-width: 5px;
     border-style: solid;
-    border-color: #d7d7d7 transparent transparent transparent; /* Cor da setinha */
+    border-color: #d7d7d7 transparent transparent transparent;
+    display: none;
   }
 
-  /* Mostrar tooltip ao passar o mouse */
   .tooltip:hover .tooltip-text {
     visibility: visible;
-    opacity: 1; /* Mostrar tooltip */
+    opacity: 1;
+  }
+
+  .destaque{
+    background-color: #383838;
+    border-radius: 20px;
+    padding: 5px;
   }
 
   #progress-bar {
     width: 0%;
     height: 20px;
     background-color: #36FFC0;
+    
   }
   #status {
     margin-top: 20px;
