@@ -5,8 +5,25 @@ body {
     font-family: 'Wix MadeFor Text',sans-serif;
     text-align: center; 
     color: aliceblue; 
-    background-color: #181818;
-}
+    background: linear-gradient(-45deg, #ee5252, #0b1113, #3e3e3e, #2c2c2c);
+    background-size: 400% 400%;
+    animation: gradient 15s ease infinite;
+    height: 100vh;
+ /* background-color: #181818; */
+
+  }
+  
+  @keyframes gradient {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
+  }  
 
 h1{
 font-size: 20px;
@@ -25,16 +42,18 @@ font-size: 13px;
      color: rgb(0, 0, 0);
      font-weight: 700;
      border: none;
+     text-align: center;
 }
 button { 
      margin: 10px;
      padding: 10px 42px; 
      color: rgb(0, 0, 0); 
-     background-color: #ff5f5f; 
+     background-color: #ff5858; 
      border-radius: 5px; 
      border-style: none; 
      cursor: pointer;
      font-weight: 700;
+     font-size: 12px;
      align-items: center;
      justify-content: center;
      transition: background-color 0.3s ease;
@@ -90,7 +109,7 @@ button:hover{
   }
 
   .destaque{
-    background-color: #383838;
+    background-color: #0000003f;
     border-radius: 20px;
     padding: 5px;
   }
