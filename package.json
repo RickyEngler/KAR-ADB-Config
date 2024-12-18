@@ -1,6 +1,6 @@
 {
   "name": "kar-adb-config",
-  "version": "1.1.5",
+  "version": "1.1.6",
   "main": "main.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -12,6 +12,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "electron-updater": "^6.3.9",
     "unzipper": "^0.12.3"
   },
   "devDependencies": {
@@ -28,6 +29,11 @@
       "assets/icons/icon.ico",
       "!node_modules/.cache"
     ],
+    "publish": {
+      "provider": "github",
+      "owner": "RickyEngler",
+      "repo": "KAR-ADB-Config"
+    },
     "compression": "maximum",
     "appId": "com.libertyhealth.adbconfig",
     "productName": "ADB Config",

@@ -1,5 +1,16 @@
 const { ipcRenderer } = require('electron');
 
+ipcRenderer.on('update_available', () => {
+  alert('Nova atualização disponível. O download está sendo iniciado...');
+});
+
+ipcRenderer.on('update_downloaded', () => {
+  const userResponse = confirm('Atualização concluída. Deseja reiniciar o aplicativo agora?');
+  if (userResponse) {
+    ipcRenderer.send('restart_app');
+  }
+});
+
 window.connect = () => {
   const ip = document.getElementById('ip').value;
   if (!ip) {
@@ -9,8 +20,8 @@ window.connect = () => {
 
   ipcRenderer.invoke('execute-adb-command', `connect ${ip}:5555`)
     .then((result) => {
-      alert(`Conectado ao dispositivo: ${result}`);
-      updateUIStatus(`Conectado ao dispositivo: ${result}`);
+      alert(`Conectado ao dispositivo`);
+      updateUIStatus(`Conectado ao dispositivo.`);
     })
     .catch((error) => {
       alert(`Erro de Conexão: ${error}`);
@@ -22,12 +33,26 @@ window.disconnect = () => {
   const ip = document.getElementById('ip').value;
   ipcRenderer.invoke('execute-adb-command', `disconnect ${ip}:5555`)
     .then((result) => {
-      alert(`Desconectado do dispositivo: ${result}`);
-      updateUIStatus(`Desconectado do dispositivo: ${result}`);
+      alert(`Desconectado do dispositivo.`);
+      updateUIStatus(`Desconectado do dispositivo.`);
     })
     .catch((error) => {
       alert(`Erro ao Desconectar: ${error}`);
       updateUIStatus(`Erro ao Desconectar: ${error}`);
+    });
+};
+
+window.rebootDevice = () => {
+  ipcRenderer.invoke('execute-adb-command', 'reboot')
+    .then(() => {
+      const successMessage = 'Reinicialização do dispositivo concluída com sucesso.';
+      alert(successMessage);
+      updateUIStatus(successMessage);
+    })
+    .catch((error) => {
+      const errorMessage = `Erro ao reinicializar o dispositivo: ${error}`;
+      alert(errorMessage);
+      updateUIStatus(errorMessage);
     });
 };
 
@@ -47,41 +72,60 @@ window.uninstallApps = () => {
     "shell pm uninstall --user 0 com.android.dreams.basic"
   ];
 
-  commands.forEach((command) => {
+  const promises = commands.map((command) =>
     ipcRenderer.invoke('execute-adb-command', command)
-      .then((result) => console.log(`Comando executado com sucesso: ${command}\n${result}`))
-      .catch((error) => console.error(`Erro ao executar o comando: ${command}\n${error}`));
-  });
+      .then((result) => {
+        console.log(`Comando executado com sucesso: ${command}`);
+        return { command, result, success: true };
+      })
+      .catch((error) => {
+        console.error(`Erro ao executar o comando: ${command}`);
+        return { command, error, success: false };
+      })
+  );
 
-  alert('Processo de desinstalação iniciado.');
-};
+  Promise.all(promises)
+    .then((results) => {
+      const successfulCommands = results.filter(r => r.success);
+      const failedCommands = results.filter(r => !r.success);
 
-window.executeCommand = (command) => {
-  ipcRenderer.invoke('execute-adb-command', command)
-    .then((result) => {
-      alert(`Comando Executado: ${result}`);
-      updateUIStatus(`Comando Executado: ${result}`);
+      let finalMessage = `Processo de desinstalação concluído.\n`;
+      if (successfulCommands.length > 0) {
+        finalMessage += `Comandos bem-sucedidos: ${successfulCommands.length}\n`;
+      }
+      if (failedCommands.length > 0) {
+        finalMessage += `Comandos com falhas: ${failedCommands.length}`;
+      }
+
+      alert(finalMessage);
+      updateUIStatus(finalMessage);
     })
     .catch((error) => {
-      alert(`Erro ao Executar Comando: ${error}`);
-      updateUIStatus(`Erro ao Executar Comando: ${error}`);
+      const errorMessage = 'Ocorreu um erro inesperado ao processar os comandos de desinstalação.';
+      alert(errorMessage);
+      updateUIStatus(errorMessage);
+      console.error(error);
     });
+
+  const startMessage = 'Processo de desinstalação iniciado.';
+  alert(startMessage);
+  updateUIStatus(startMessage);
 };
 
 window.installApk = async () => {
-  const apkPath = await selectFile('Selecione o APK do Fully Kiosk Browser', [
+  const apkPath = await selectFile('Selecione o aplicativo que deseja instalar', [
     { name: 'APK Files', extensions: ['apk'] },
   ]);
 
   if (apkPath) {
     ipcRenderer.invoke('install-apk', apkPath)
       .then((result) => {
-        alert(`APK instalado com sucesso: ${result}`);
-        updateUIStatus(`APK instalado: ${result}`);
+        alert(`Aplicativo instalado com sucesso.`);
+        updateUIStatus(`Aplicativo instalado com sucesso.`);
       })
       .catch((error) => {
-        alert(`Erro ao instalar o APK: ${error}`);
-        updateUIStatus(`Erro ao instalar o APK: ${error}`);
+        alert(`Erro ao instalar o aplicativo: ${error}`);
+        updateUIStatus(`Erro ao instalar o aplicativo: ${error}`);
       });
   }
 };
@@ -94,12 +138,12 @@ window.injectConfig = async () => {
   if (configPath) {
     ipcRenderer.invoke('inject-config', configPath)
       .then((result) => {
-        alert(`Configuração injetada com sucesso: ${result}`);
-        updateUIStatus(`Configuração injetada: ${result}`);
+        alert(`Configuração importada com sucesso!`);
+        updateUIStatus(`Configuração importada com sucesso.`);
       })
       .catch((error) => {
-        alert(`Erro ao injetar a configuração: ${error}`);
-        updateUIStatus(`Erro ao injetar a configuração: ${error}`);
+        alert(`Erro ao importar a configuração!`);
+        updateUIStatus(`Erro ao importar a configuração: ${error}`);
       });
   }
 };

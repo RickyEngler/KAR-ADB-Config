@@ -112,6 +112,7 @@ button:hover{
     background-color: #0000003f;
     border-radius: 20px;
     padding: 5px;
+    height: 95%;
   }
 
   #progress-bar {

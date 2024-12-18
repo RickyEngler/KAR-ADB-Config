@@ -1,25 +1,38 @@
 const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+const { autoUpdater } = require('electron-updater');
 const { exec } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
+let mainWindow;
 let sdkPath = '';
+let adbProcess;
 
+// Função para criar a janela principal
 function createWindow() {
-  const win = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     width: 600,
-    height: 700,
+    height: 750,
     webPreferences: {
-      preload: path.join(__dirname, 'renderer.js'),
+      preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: true,
       contextIsolation: false,
     },
   });
 
-  win.loadFile('index.html');
-  verificarAdb(win);
+  mainWindow.loadFile('index.html');
+
+  // Verificar atualizações
+  autoUpdater.checkForUpdatesAndNotify();
+
+  mainWindow.on('closed', () => {
+    mainWindow = null;
+  });
+
+  verificarAdb(mainWindow); // Verificar ADB na inicialização
 }
 
+// Verificar e inicializar ADB
 function verificarAdb(win) {
   if (!sdkPath) {
     sdkPath = recuperarSdkPath();
@@ -44,6 +57,7 @@ function verificarAdb(win) {
   }
 }
 
+// Função para seleção do SDK
 function selecionarSdk(win) {
   const selectedPath = dialog.showOpenDialogSync({
     title: 'Selecione o diretório do SDK (Platform Tools)',
@@ -68,10 +82,12 @@ function selecionarSdk(win) {
   }
 }
 
+// Função para salvar o caminho do SDK
 function salvarSdkPath(path) {
   fs.writeFileSync('sdk-config.json', JSON.stringify({ sdkPath: path }), 'utf8');
 }
 
+// Função para recuperar o caminho do SDK salvo
 function recuperarSdkPath() {
   if (fs.existsSync('sdk-config.json')) {
     const config = JSON.parse(fs.readFileSync('sdk-config.json', 'utf8'));
@@ -80,6 +96,7 @@ function recuperarSdkPath() {
   return '';
 }
 
+// Listeners IPC para comandos ADB e diálogos
 ipcMain.handle('execute-adb-command', async (event, command) => {
   const adbPath = path.join(sdkPath, 'adb.exe');
   return new Promise((resolve, reject) => {
@@ -118,6 +135,7 @@ ipcMain.handle('dialog:open-file', async (event, options) => {
   return result;
 });
 
+// Inicialização do aplicativo
 app.whenReady().then(() => {
   createWindow();
 
@@ -126,6 +144,29 @@ app.whenReady().then(() => {
   });
 });
 
+// Evento para encerrar subprocessos e garantir saída limpa
+app.on('will-quit', () => {
+  if (adbProcess) {
+    adbProcess.kill('SIGINT'); // Encerra o processo ADB
+  }
+  process.exit(0); // Força a saída do processo principal
+});
+
+// Fechar o aplicativo quando todas as janelas forem encerradas
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
+});
+
+// AutoUpdater eventos
+autoUpdater.on('update-available', () => {
+  if (mainWindow) mainWindow.webContents.send('update_available');
+});
+
+autoUpdater.on('update-downloaded', () => {
+  if (mainWindow) mainWindow.webContents.send('update_downloaded');
+});
+
+// Reiniciar o app após a atualização
+ipcMain.on('restart_app', () => {
+  autoUpdater.quitAndInstall();
 });
