@@ -28,10 +28,12 @@ h1{
 font-size: 20px;
 text-transform: uppercase;
 }
+
 h2{
 margin-top: 16px;
 font-size: 13px;
 }
+
 .label { margin: 10px 0;
      padding: 8px; 
      width: 80%; 
@@ -43,11 +45,12 @@ font-size: 13px;
      border: none;
      text-align: center;
 }
+
 button { 
      margin: 10px;
      padding: 10px 42px; 
      color: rgb(0, 0, 0); 
-     background: linear-gradient(-70deg, #ee5252, #b90000);
+     background-color: #ee5252;
      border-radius: 5px; 
      border-style: none; 
      cursor: pointer;
