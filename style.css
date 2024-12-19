@@ -9,8 +9,7 @@ body {
     background-size: 400% 400%;
     animation: gradient 15s ease infinite;
     height: 100vh;
- /* background-color: #181818; */
-
+    overflow: hidden;
   }
   
   @keyframes gradient {
@@ -33,7 +32,7 @@ h2{
 margin-top: 16px;
 font-size: 13px;
 }
-.input { margin: 10px 0;
+.label { margin: 10px 0;
      padding: 8px; 
      width: 80%; 
      border-radius: 5px; 
@@ -48,7 +47,7 @@ button {
      margin: 10px;
      padding: 10px 42px; 
      color: rgb(0, 0, 0); 
-     background-color: #ff5858; 
+     background: linear-gradient(-70deg, #ee5252, #b90000);
      border-radius: 5px; 
      border-style: none; 
      cursor: pointer;
@@ -56,11 +55,11 @@ button {
      font-size: 12px;
      align-items: center;
      justify-content: center;
-     transition: background-color 0.3s ease;
+     transition: background-color 0.9s ease;
 }
 
 button:hover{
-     background-color: #ffc1c1; 
+  background: linear-gradient(-70deg, #ee5252, #ff7b7b);
 }
 
 .contentebtn{

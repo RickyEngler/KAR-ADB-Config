@@ -11,34 +11,63 @@ ipcRenderer.on('update_downloaded', () => {
   }
 });
 
+window.onload = () => {
+  const ipInput = document.getElementById('ip');
+  ipInput.value = '';
+  ipInput.disabled = false;
+  updateUIStatus('Aplicativo iniciado.');
+};
+
 window.connect = () => {
-  const ip = document.getElementById('ip').value;
+  const ipInput = document.getElementById('ip');
+  const ip = ipInput.value.trim();
+  const ipRegex = /^(25[0-5]|2[0-4][0-9]|[0-1]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[0-1]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[0-1]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[0-1]?[0-9][0-9]?)$/;
+
   if (!ip) {
     alert('Por favor, insira um IP válido.');
+    updateUIStatus('Erro: Nenhum IP fornecido.');
+    return;
+  }
+
+  if (!ipRegex.test(ip)) {
+    alert('Formato de IP inválido.');
+    updateUIStatus('Erro: IP inválido.');
     return;
   }
 
   ipcRenderer.invoke('execute-adb-command', `connect ${ip}:5555`)
-    .then((result) => {
-      alert(`Conectado ao dispositivo`);
-      updateUIStatus(`Conectado ao dispositivo.`);
+    .then(() => {
+      alert(`Conectado ao dispositivo ${ip}.`);
+      updateUIStatus(`Conectado ao dispositivo ${ip}.`);
+      ipInput.disabled = false;
     })
     .catch((error) => {
-      alert(`Erro de Conexão: ${error}`);
-      updateUIStatus(`Erro de Conexão: ${error}`);
+      alert(`Erro ao conectar: ${error}`);
+      updateUIStatus(`Erro ao conectar: ${error}`);
+      ipInput.disabled = false;
     });
 };
 
 window.disconnect = () => {
-  const ip = document.getElementById('ip').value;
+  const ipInput = document.getElementById('ip');
+  const ip = ipInput.value.trim();
+
+  if (!ip) {
+    alert('Por favor, insira um IP válido para desconectar.');
+    updateUIStatus('Erro: Nenhum IP fornecido.');
+    return;
+  }
+
   ipcRenderer.invoke('execute-adb-command', `disconnect ${ip}:5555`)
-    .then((result) => {
-      alert(`Desconectado do dispositivo.`);
-      updateUIStatus(`Desconectado do dispositivo.`);
+    .then(() => {
+      alert(`Desconectado do dispositivo ${ip}.`);
+      updateUIStatus(`Desconectado do dispositivo ${ip}.`);
+      ipInput.disabled = false;
     })
     .catch((error) => {
-      alert(`Erro ao Desconectar: ${error}`);
-      updateUIStatus(`Erro ao Desconectar: ${error}`);
+      alert(`Erro ao desconectar: ${error}`);
+      updateUIStatus(`Erro ao desconectar: ${error}`);
+      ipInput.disabled = false;
     });
 };
 

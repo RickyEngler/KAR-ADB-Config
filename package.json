@@ -3,6 +3,7 @@
   "version": "1.1.6",
   "main": "main.js",
   "scripts": {
+    "dist": "electron-builder",
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "electron .",
     "build": "electron-builder"
@@ -27,12 +28,14 @@
       "index.html",
       "style.css",
       "assets/icons/icon.ico",
-      "!node_modules/.cache"
+      "!node_modules/.cache",
+      "!**/*.map",
+      "!**/test/**"
     ],
     "publish": {
       "provider": "github",
       "owner": "RickyEngler",
-      "repo": "KAR-ADB-Config"
+      "repo": "https://github.com/RickyEngler/KAR-ADB-Config"
     },
     "compression": "maximum",
     "appId": "com.libertyhealth.adbconfig",

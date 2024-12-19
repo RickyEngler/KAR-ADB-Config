@@ -22,14 +22,31 @@ function createWindow() {
 
   mainWindow.loadFile('index.html');
 
-  // Verificar atualizações
-  autoUpdater.checkForUpdatesAndNotify();
-
-  mainWindow.on('closed', () => {
-    mainWindow = null;
+  // Eventos para atualização automática
+  autoUpdater.on('update-available', () => {
+    mainWindow.webContents.send('update-available');
   });
 
-  verificarAdb(mainWindow); // Verificar ADB na inicialização
+  autoUpdater.on('update-not-available', () => {
+    mainWindow.webContents.send('update-not-available');
+  });
+
+  autoUpdater.on('download-progress', (progressObj) => {
+    mainWindow.webContents.send('download-progress', progressObj.percent.toFixed(2));
+  });
+
+  autoUpdater.on('update-downloaded', () => {
+    mainWindow.webContents.send('update-downloaded');
+  });
+
+  autoUpdater.on('error', (err) => {
+    mainWindow.webContents.send('update-error', err.message);
+  });
+
+  // Iniciar verificação de atualização
+  autoUpdater.checkForUpdatesAndNotify();
+
+  verificarAdb();
 }
 
 // Verificar e inicializar ADB
