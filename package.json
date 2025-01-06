@@ -39,7 +39,7 @@
     },
     "compression": "maximum",
     "appId": "com.rkzdev.adbconfig",
-    "productName": "ADB Connector",
+    "productName": "ADB Config",
     "win": {
       "icon": "assets/icons/icon.ico",
       "target": "nsis"

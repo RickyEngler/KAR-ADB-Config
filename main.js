@@ -1,12 +1,12 @@
 const { app, BrowserWindow, ipcMain, dialog, shell, Menu } = require('electron');
 const { autoUpdater } = require('electron-updater');
-const { exec } = require('child_process');
+const { exec, spawn } = require('child_process'); // Adicionamos spawn para gerenciar processos
 const fs = require('fs');
 const path = require('path');
 
 let mainWindow;
 let sdkPath = '';
-let adbProcess;
+let adbProcess; // Variável para o processo ADB
 
 // Função para criar a janela principal
 function createWindow() {
@@ -85,8 +85,18 @@ app.whenReady().then(() => {
   autoUpdater.checkForUpdatesAndNotify();
 });
 
+// Evento para encerrar subprocessos ao fechar todas as janelas
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
+});
+
+// Evento para encerrar subprocessos ao sair
+app.on('will-quit', () => {
+  // Encerra o processo ADB se estiver em execução
+  if (adbProcess) {
+    console.log('Encerrando o processo ADB...');
+    adbProcess.kill('SIGINT'); // Encerra o processo
+  }
 });
 
 // Eventos do AutoUpdater
@@ -125,14 +135,20 @@ function verificarAdb(win) {
   const adbPath = path.join(sdkPath, 'adb.exe');
 
   if (fs.existsSync(adbPath)) {
-    exec(`"${adbPath}" --version`, (error, stdout, stderr) => {
-      if (error) {
-        console.log('Erro ao verificar o ADB:', stderr);
-        win.webContents.send('adb-status', 'Erro ao verificar o ADB.');
-      } else {
-        console.log('ADB encontrado:', stdout);
-        win.webContents.send('adb-status', 'ADB encontrado: ' + stdout);
-      }
+    adbProcess = spawn(adbPath, ['--version']); // Usando spawn para maior controle do processo
+
+    adbProcess.stdout.on('data', (data) => {
+      console.log(`ADB encontrado: ${data}`);
+      win.webContents.send('adb-status', `ADB encontrado: ${data}`);
+    });
+
+    adbProcess.stderr.on('data', (data) => {
+      console.error(`Erro ao verificar o ADB: ${data}`);
+      win.webContents.send('adb-status', 'Erro ao verificar o ADB.');
+    });
+
+    adbProcess.on('close', (code) => {
+      console.log(`Processo ADB encerrado com código: ${code}`);
     });
   } else {
     console.log('ADB não encontrado. Solicite ao usuário.');
@@ -184,10 +200,9 @@ function recuperarSdkPath() {
 ipcMain.handle('execute-adb-command', async (event, command) => {
   const adbPath = path.join(sdkPath, 'adb.exe');
   return new Promise((resolve, reject) => {
-    exec(`"${adbPath}" ${command}`, (error, stdout, stderr) => {
-      if (error) reject(stderr.trim());
-      else resolve(stdout.trim());
-    });
+    const process = exec(`"${adbPath}" ${command}`);
+    process.stdout.on('data', (data) => resolve(data.trim()));
+    process.stderr.on('data', (data) => reject(data.trim()));
   });
 });
 
@@ -217,12 +232,4 @@ ipcMain.handle('inject-config', async (event, configPath) => {
 ipcMain.handle('dialog:open-file', async (event, options) => {
   const result = await dialog.showOpenDialog(options);
   return result;
-});
-
-// Evento para encerrar subprocessos e garantir saída limpa
-app.on('will-quit', () => {
-  if (adbProcess) {
-    adbProcess.kill('SIGINT'); // Encerra o processo ADB
-  }
-  process.exit(0); // Força a saída do processo principal
 });
