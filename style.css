@@ -4,7 +4,7 @@
 body { 
     font-family: 'Wix MadeFor Text',sans-serif;
     text-align: center; 
-    color: aliceblue; 
+    color: rgb(255, 255, 255); 
     background: linear-gradient(-45deg, #ee5252, #0b1113, #3e3e3e, #2c2c2c);
     background-size: 400% 400%;
     animation: gradient 15s ease infinite;
@@ -49,8 +49,8 @@ font-size: 13px;
 button { 
      margin: 10px;
      padding: 10px 42px; 
-     color: rgb(0, 0, 0); 
-     background-color: #ee5252;
+     color: rgb(255, 255, 255); 
+     background-color: #e11b1b;
      border-radius: 5px; 
      border-style: none; 
      cursor: pointer;
@@ -58,11 +58,11 @@ button {
      font-size: 12px;
      align-items: center;
      justify-content: center;
-     transition: background-color 0.9s ease;
+     transition: background-color 0.6s ease;
 }
 
 button:hover{
-  background: linear-gradient(-70deg, #ee5252, #ff7b7b);
+  background: #3100005b;
 }
 
 .contentebtn{
@@ -117,12 +117,6 @@ button:hover{
     height: 95%;
   }
 
-  #progress-bar {
-    width: 0%;
-    height: 20px;
-    background-color: #36FFC0;
-    
-  }
   #status {
     margin-top: 20px;
   }

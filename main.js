@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, shell, Menu } = require('electron');
 const { autoUpdater } = require('electron-updater');
 const { exec } = require('child_process');
 const fs = require('fs');
@@ -22,34 +22,101 @@ function createWindow() {
 
   mainWindow.loadFile('index.html');
 
-  // Eventos para atualização automática
-  autoUpdater.on('update-available', () => {
-    mainWindow.webContents.send('update-available');
-  });
-
-  autoUpdater.on('update-not-available', () => {
-    mainWindow.webContents.send('update-not-available');
-  });
-
-  autoUpdater.on('download-progress', (progressObj) => {
-    mainWindow.webContents.send('download-progress', progressObj.percent.toFixed(2));
-  });
-
-  autoUpdater.on('update-downloaded', () => {
-    mainWindow.webContents.send('update-downloaded');
-  });
-
-  autoUpdater.on('error', (err) => {
-    mainWindow.webContents.send('update-error', err.message);
-  });
-
-  // Iniciar verificação de atualização
-  autoUpdater.checkForUpdatesAndNotify();
-
-  verificarAdb();
+  // Verificar ADB ao iniciar a janela principal
+  verificarAdb(mainWindow);
 }
 
-// Verificar e inicializar ADB
+// Função para configurar o menu
+const createMenu = () => {
+  const menuTemplate = [
+    {
+      label: 'Help',
+      submenu: [{
+        label: 'Documentação SGHx',
+        click: async () => {
+          const { shell } = require('electron');
+          await shell.openExternal('https://libertyti.atlassian.net/wiki/spaces/DSS/pages/261750921/POP+-+Configura+o+KAR+2.0+Fully');
+        },
+      },
+      {
+        label: 'Documentação SGHx CAPS',
+        click: async () => {
+          const { shell } = require('electron');
+          await shell.openExternal('https://libertyti.atlassian.net/wiki/spaces/DSS/pages/314966088/POP+-+Configura+o+KAR+2.0+-+CAPS+Fully');
+        },
+      },],
+    },
+    {
+      label: 'Update',
+      submenu: [
+        {
+          label: 'Buscar Atualizações',
+          click: () => {
+            console.log('Buscando atualizações...');
+          },
+        },
+        {
+          label: 'Refresh Webview', // Nova opção para refresh
+          click: () => {
+            const focusedWindow = BrowserWindow.getFocusedWindow(); // Obtém a janela em foco
+            if (focusedWindow) {
+              focusedWindow.webContents.send('refresh-webview'); // Envia um comando para o front-end atualizar a webview
+            }
+          },
+        },
+      ],
+    },
+  ];
+
+  const menu = Menu.buildFromTemplate(menuTemplate);
+  Menu.setApplicationMenu(menu);
+};
+
+// Eventos de inicialização do app
+app.whenReady().then(() => {
+  createWindow();
+  createMenu();
+
+  app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+  });
+
+  // Iniciar verificação de atualizações
+  autoUpdater.checkForUpdatesAndNotify();
+});
+
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') app.quit();
+});
+
+// Eventos do AutoUpdater
+autoUpdater.on('update-available', () => {
+  if (mainWindow) mainWindow.webContents.send('update_available');
+});
+
+autoUpdater.on('update-not-available', () => {
+  if (mainWindow) mainWindow.webContents.send('update_not_available');
+});
+
+autoUpdater.on('download-progress', (progressObj) => {
+  if (mainWindow) {
+    mainWindow.webContents.send('download-progress', progressObj.percent.toFixed(2));
+  }
+});
+
+autoUpdater.on('update-downloaded', () => {
+  if (mainWindow) mainWindow.webContents.send('update_downloaded');
+});
+
+autoUpdater.on('error', (err) => {
+  if (mainWindow) mainWindow.webContents.send('update_error', err.message);
+});
+
+ipcMain.on('restart_app', () => {
+  autoUpdater.quitAndInstall();
+});
+
+// Função para verificar e inicializar o ADB
 function verificarAdb(win) {
   if (!sdkPath) {
     sdkPath = recuperarSdkPath();
@@ -75,14 +142,14 @@ function verificarAdb(win) {
 }
 
 // Função para seleção do SDK
-function selecionarSdk(win) {
-  const selectedPath = dialog.showOpenDialogSync({
+async function selecionarSdk(win) {
+  const selectedPath = await dialog.showOpenDialog({
     title: 'Selecione o diretório do SDK (Platform Tools)',
     properties: ['openDirectory'],
   });
 
-  if (selectedPath && selectedPath[0]) {
-    sdkPath = selectedPath[0];
+  if (selectedPath.filePaths && selectedPath.filePaths[0]) {
+    sdkPath = selectedPath.filePaths[0];
     const adbPath = path.join(sdkPath, 'adb.exe');
 
     if (fs.existsSync(adbPath)) {
@@ -101,7 +168,7 @@ function selecionarSdk(win) {
 
 // Função para salvar o caminho do SDK
 function salvarSdkPath(path) {
-  fs.writeFileSync('sdk-config.json', JSON.stringify({ sdkPath: path }), 'utf8');
+  fs.writeFileSync('sdk-config.json', JSON.stringify({ sdkPath: path }, null, 2), 'utf8');
 }
 
 // Função para recuperar o caminho do SDK salvo
@@ -152,38 +219,10 @@ ipcMain.handle('dialog:open-file', async (event, options) => {
   return result;
 });
 
-// Inicialização do aplicativo
-app.whenReady().then(() => {
-  createWindow();
-
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
-  });
-});
-
 // Evento para encerrar subprocessos e garantir saída limpa
 app.on('will-quit', () => {
   if (adbProcess) {
     adbProcess.kill('SIGINT'); // Encerra o processo ADB
   }
   process.exit(0); // Força a saída do processo principal
-});
-
-// Fechar o aplicativo quando todas as janelas forem encerradas
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') app.quit();
-});
-
-// AutoUpdater eventos
-autoUpdater.on('update-available', () => {
-  if (mainWindow) mainWindow.webContents.send('update_available');
-});
-
-autoUpdater.on('update-downloaded', () => {
-  if (mainWindow) mainWindow.webContents.send('update_downloaded');
-});
-
-// Reiniciar o app após a atualização
-ipcMain.on('restart_app', () => {
-  autoUpdater.quitAndInstall();
 });
