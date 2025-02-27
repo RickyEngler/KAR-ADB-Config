@@ -1,7 +1,10 @@
 const { ipcRenderer } = require('electron');
+const { autoUpdater } = require('electron-updater');
+
+autoUpdater.checkForUpdatesAndNotify();
 
 ipcRenderer.on('update_available', () => {
-  alert('Nova atualização disponível. O download está sendo iniciado...');
+  alert('Nova atualização disponível!');
 });
 
 ipcRenderer.on('update_downloaded', () => {
