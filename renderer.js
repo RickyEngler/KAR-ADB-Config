@@ -38,7 +38,7 @@ window.connect = () => {
     return;
   }
 
-  showLoading(); 
+  showLoading(); // Mostrar overlay de loading
   ipcRenderer.invoke('execute-adb-command', `connect ${ip}:5555`)
     .then(() => {
       alert(`Conectado ao dispositivo ${ip}.`);
@@ -50,7 +50,7 @@ window.connect = () => {
       updateUIStatus(`Erro ao conectar: ${error}`);
       ipInput.disabled = false;
     })
-    .finally(() => hideLoading());
+    .finally(() => hideLoading()); // Ocultar overlay de loading
 };
 
 window.disconnect = () => {
@@ -63,7 +63,7 @@ window.disconnect = () => {
     return;
   }
 
-  showLoading();
+  showLoading(); // Mostrar overlay de loading
   ipcRenderer.invoke('execute-adb-command', `disconnect ${ip}:5555`)
     .then(() => {
       alert(`Desconectado do dispositivo ${ip}.`);
@@ -75,11 +75,11 @@ window.disconnect = () => {
       updateUIStatus(`Erro ao desconectar: ${error}`);
       ipInput.disabled = false;
     })
-    .finally(() => hideLoading());
+    .finally(() => hideLoading()); // Ocultar overlay de loading
 };
 
 window.rebootDevice = () => {
-  showLoading(); 
+  showLoading(); // Mostrar overlay de loading
   ipcRenderer.invoke('execute-adb-command', 'reboot')
     .then(() => {
       const successMessage = 'Reinicialização do dispositivo concluída com sucesso.';
@@ -91,7 +91,7 @@ window.rebootDevice = () => {
       alert(errorMessage);
       updateUIStatus(errorMessage);
     })
-    .finally(() => hideLoading());
+    .finally(() => hideLoading()); // Ocultar overlay de loading
 };
 
 window.uninstallApps = () => {
@@ -110,7 +110,7 @@ window.uninstallApps = () => {
     "shell pm uninstall --user 0 com.android.dreams.basic"
   ];
 
-  showLoading();
+  showLoading(); // Mostrar overlay de loading
   const promises = commands.map((command) =>
     ipcRenderer.invoke('execute-adb-command', command)
       .then((result) => {
@@ -145,7 +145,7 @@ window.uninstallApps = () => {
       updateUIStatus(errorMessage);
       console.error(error);
     })
-    .finally(() => hideLoading());
+    .finally(() => hideLoading()); // Ocultar overlay de loading
 };
 
 window.installApk = async () => {
@@ -154,7 +154,7 @@ window.installApk = async () => {
   ]);
 
   if (apkPath) {
-    showLoading(); 
+    showLoading(); // Mostrar overlay de loading
     ipcRenderer.invoke('install-apk', apkPath)
       .then((result) => {
         alert(`Aplicativo instalado com sucesso.`);
@@ -164,7 +164,7 @@ window.installApk = async () => {
         alert(`Erro ao instalar o aplicativo: ${error}`);
         updateUIStatus(`Erro ao instalar o aplicativo: ${error}`);
       })
-      .finally(() => hideLoading());
+      .finally(() => hideLoading()); // Ocultar overlay de loading
   }
 };
 
@@ -174,7 +174,7 @@ window.injectConfig = async () => {
   ]);
 
   if (configPath) {
-    showLoading();
+    showLoading(); // Mostrar overlay de loading
     ipcRenderer.invoke('inject-config', configPath)
       .then((result) => {
         alert(`Configuração importada com sucesso!`);
@@ -184,7 +184,7 @@ window.injectConfig = async () => {
         alert(`Erro ao importar a configuração!`);
         updateUIStatus(`Erro ao importar a configuração: ${error}`);
       })
-      .finally(() => hideLoading()); 
+      .finally(() => hideLoading()); // Ocultar overlay de loading
   }
 };
 
@@ -213,11 +213,13 @@ const updateUIProgress = (progress) => {
   document.getElementById('progress-text').innerText = `Progresso: ${progress}%`;
 };
 
+// Mostrar a tela de loading
 function showLoading() {
   const overlay = document.getElementById('loading-overlay');
   overlay.style.display = 'flex';
 }
 
+// Ocultar a tela de loading
 function hideLoading() {
   const overlay = document.getElementById('loading-overlay');
   overlay.style.display = 'none';

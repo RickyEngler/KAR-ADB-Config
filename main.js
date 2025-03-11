@@ -1,13 +1,14 @@
 const { app, BrowserWindow, ipcMain, dialog, shell, Menu } = require('electron');
 const { autoUpdater } = require('electron-updater');
-const { exec, spawn } = require('child_process'); 
+const { exec, spawn } = require('child_process'); // Adicionamos spawn para gerenciar processos
 const fs = require('fs');
 const path = require('path');
 
 let mainWindow;
 let sdkPath = '';
-let adbProcess; 
+let adbProcess; // Variável para o processo ADB
 
+// Função para criar a janela principal
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 600,
@@ -21,10 +22,11 @@ function createWindow() {
 
   mainWindow.loadFile('index.html');
 
-
+  // Verificar ADB ao iniciar a janela principal
   verificarAdb(mainWindow);
 }
 
+// Função para configurar o menu
 const createMenu = () => {
   const menuTemplate = [
     {
@@ -54,11 +56,11 @@ const createMenu = () => {
           },
         },
         {
-          label: 'Refresh Webview',
+          label: 'Refresh Webview', // Nova opção para refresh
           click: () => {
-            const focusedWindow = BrowserWindow.getFocusedWindow();
+            const focusedWindow = BrowserWindow.getFocusedWindow(); // Obtém a janela em foco
             if (focusedWindow) {
-              focusedWindow.webContents.send('refresh-webview');
+              focusedWindow.webContents.send('refresh-webview'); // Envia um comando para o front-end atualizar a webview
             }
           },
         },
@@ -70,6 +72,7 @@ const createMenu = () => {
   Menu.setApplicationMenu(menu);
 };
 
+// Eventos de inicialização do app
 app.whenReady().then(() => {
   createWindow();
   createMenu();
@@ -78,21 +81,25 @@ app.whenReady().then(() => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
 
+  // Iniciar verificação de atualizações
   autoUpdater.checkForUpdatesAndNotify();
 });
 
+// Evento para encerrar subprocessos ao fechar todas as janelas
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
 });
 
+// Evento para encerrar subprocessos ao sair
 app.on('will-quit', () => {
-
+  // Encerra o processo ADB se estiver em execução
   if (adbProcess) {
     console.log('Encerrando o processo ADB...');
-    adbProcess.kill('SIGINT'); 
+    adbProcess.kill('SIGINT'); // Encerra o processo
   }
 });
 
+// Eventos do AutoUpdater
 autoUpdater.on('update-available', () => {
   if (mainWindow) mainWindow.webContents.send('update_available');
 });
@@ -119,6 +126,7 @@ ipcMain.on('restart_app', () => {
   autoUpdater.quitAndInstall();
 });
 
+// Função para verificar e inicializar o ADB
 function verificarAdb(win) {
   if (!sdkPath) {
     sdkPath = recuperarSdkPath();
@@ -127,7 +135,7 @@ function verificarAdb(win) {
   const adbPath = path.join(sdkPath, 'adb.exe');
 
   if (fs.existsSync(adbPath)) {
-    adbProcess = spawn(adbPath, ['--version']);
+    adbProcess = spawn(adbPath, ['--version']); // Usando spawn para maior controle do processo
 
     adbProcess.stdout.on('data', (data) => {
       console.log(`ADB encontrado: ${data}`);
@@ -149,6 +157,7 @@ function verificarAdb(win) {
   }
 }
 
+// Função para seleção do SDK
 async function selecionarSdk(win) {
   const selectedPath = await dialog.showOpenDialog({
     title: 'Selecione o diretório do SDK (Platform Tools)',
@@ -173,10 +182,12 @@ async function selecionarSdk(win) {
   }
 }
 
+// Função para salvar o caminho do SDK
 function salvarSdkPath(path) {
   fs.writeFileSync('sdk-config.json', JSON.stringify({ sdkPath: path }, null, 2), 'utf8');
 }
 
+// Função para recuperar o caminho do SDK salvo
 function recuperarSdkPath() {
   if (fs.existsSync('sdk-config.json')) {
     const config = JSON.parse(fs.readFileSync('sdk-config.json', 'utf8'));
@@ -185,6 +196,7 @@ function recuperarSdkPath() {
   return '';
 }
 
+// Listeners IPC para comandos ADB e diálogos
 ipcMain.handle('execute-adb-command', async (event, command) => {
   const adbPath = path.join(sdkPath, 'adb.exe');
   return new Promise((resolve, reject) => {
