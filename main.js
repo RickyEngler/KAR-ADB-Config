@@ -1,14 +1,13 @@
 const { app, BrowserWindow, ipcMain, dialog, shell, Menu } = require('electron');
 const { autoUpdater } = require('electron-updater');
-const { exec, spawn } = require('child_process'); // Adicionamos spawn para gerenciar processos
+const { exec, spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
 let mainWindow;
 let sdkPath = '';
-let adbProcess; // Variável para o processo ADB
+let adbProcess;
 
-// Função para criar a janela principal
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 600,
@@ -22,11 +21,9 @@ function createWindow() {
 
   mainWindow.loadFile('index.html');
 
-  // Verificar ADB ao iniciar a janela principal
   verificarAdb(mainWindow);
 }
 
-// Função para configurar o menu
 const createMenu = () => {
   const menuTemplate = [
     {
@@ -56,11 +53,11 @@ const createMenu = () => {
           },
         },
         {
-          label: 'Refresh Webview', // Nova opção para refresh
+          label: 'Refresh Webview',
           click: () => {
-            const focusedWindow = BrowserWindow.getFocusedWindow(); // Obtém a janela em foco
+            const focusedWindow = BrowserWindow.getFocusedWindow();
             if (focusedWindow) {
-              focusedWindow.webContents.send('refresh-webview'); // Envia um comando para o front-end atualizar a webview
+              focusedWindow.webContents.send('refresh-webview');
             }
           },
         },
@@ -72,7 +69,6 @@ const createMenu = () => {
   Menu.setApplicationMenu(menu);
 };
 
-// Eventos de inicialização do app
 app.whenReady().then(() => {
   createWindow();
   createMenu();
@@ -81,25 +77,10 @@ app.whenReady().then(() => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
 
-  // Iniciar verificação de atualizações
   autoUpdater.checkForUpdatesAndNotify();
 });
 
-// Evento para encerrar subprocessos ao fechar todas as janelas
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') app.quit();
-});
 
-// Evento para encerrar subprocessos ao sair
-app.on('will-quit', () => {
-  // Encerra o processo ADB se estiver em execução
-  if (adbProcess) {
-    console.log('Encerrando o processo ADB...');
-    adbProcess.kill('SIGINT'); // Encerra o processo
-  }
-});
-
-// Eventos do AutoUpdater
 autoUpdater.on('update-available', () => {
   if (mainWindow) mainWindow.webContents.send('update_available');
 });
@@ -126,7 +107,6 @@ ipcMain.on('restart_app', () => {
   autoUpdater.quitAndInstall();
 });
 
-// Função para verificar e inicializar o ADB
 function verificarAdb(win) {
   if (!sdkPath) {
     sdkPath = recuperarSdkPath();
@@ -135,7 +115,7 @@ function verificarAdb(win) {
   const adbPath = path.join(sdkPath, 'adb.exe');
 
   if (fs.existsSync(adbPath)) {
-    adbProcess = spawn(adbPath, ['--version']); // Usando spawn para maior controle do processo
+    adbProcess = spawn(adbPath, ['--version']);
 
     adbProcess.stdout.on('data', (data) => {
       console.log(`ADB encontrado: ${data}`);
@@ -148,7 +128,7 @@ function verificarAdb(win) {
     });
 
     adbProcess.on('close', (code) => {
-      console.log(`Processo ADB encerrado com código: ${code}`);
+      console.log(`Processo ADB iniciado com sucesso.`);
     });
   } else {
     console.log('ADB não encontrado. Solicite ao usuário.');
@@ -157,7 +137,6 @@ function verificarAdb(win) {
   }
 }
 
-// Função para seleção do SDK
 async function selecionarSdk(win) {
   const selectedPath = await dialog.showOpenDialog({
     title: 'Selecione o diretório do SDK (Platform Tools)',
@@ -182,12 +161,10 @@ async function selecionarSdk(win) {
   }
 }
 
-// Função para salvar o caminho do SDK
 function salvarSdkPath(path) {
   fs.writeFileSync('sdk-config.json', JSON.stringify({ sdkPath: path }, null, 2), 'utf8');
 }
 
-// Função para recuperar o caminho do SDK salvo
 function recuperarSdkPath() {
   if (fs.existsSync('sdk-config.json')) {
     const config = JSON.parse(fs.readFileSync('sdk-config.json', 'utf8'));
@@ -196,7 +173,32 @@ function recuperarSdkPath() {
   return '';
 }
 
-// Listeners IPC para comandos ADB e diálogos
+ipcMain.handle('reboot', async () => {
+  const adbPath = path.join(sdkPath, 'adb.exe');
+
+  if (!fs.existsSync(adbPath)) {
+    const errorMsg = 'ADB não encontrado no caminho configurado.';
+    console.error(errorMsg);
+    return Promise.reject(errorMsg);
+  }
+
+  console.log('Reiniciando dispositivo com ADB em:', adbPath);
+
+  return new Promise((resolve, reject) => {
+    exec(`"${adbPath}" reboot`, (error, stdout, stderr) => {
+      console.log('stdout:', stdout);
+      console.log('stderr:', stderr);
+
+      if (error) {
+        console.error('Erro:', stderr || error.message);
+        reject(`Reinicialização não executada. ${stderr || error.message}`);
+      } else {
+        resolve(stdout || 'Comando de reinicialização enviado com sucesso!');
+      }
+    });
+  });
+});
+
 ipcMain.handle('execute-adb-command', async (event, command) => {
   const adbPath = path.join(sdkPath, 'adb.exe');
   return new Promise((resolve, reject) => {
@@ -211,7 +213,7 @@ ipcMain.handle('install-apk', async (event, apkPath) => {
   return new Promise((resolve, reject) => {
     exec(`"${adbPath}" install "${apkPath}"`, (error, stdout, stderr) => {
       if (error) reject(stderr.trim());
-      else resolve('APK instalado com sucesso!');
+      else resolve('Aplicativo instalado com sucesso!');
     });
   });
 });
@@ -223,7 +225,7 @@ ipcMain.handle('inject-config', async (event, configPath) => {
       `"${adbPath}" push "${configPath}" /sdcard/Download/fully-kiosk-config.json`,
       (error, stdout, stderr) => {
         if (error) reject(stderr.trim());
-        else resolve('Configuração injetada com sucesso!');
+        else resolve('Arquivo de configuração enviado com sucesso!');
       }
     );
   });
@@ -232,4 +234,15 @@ ipcMain.handle('inject-config', async (event, configPath) => {
 ipcMain.handle('dialog:open-file', async (event, options) => {
   const result = await dialog.showOpenDialog(options);
   return result;
+});
+
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') app.quit();
+});
+
+app.on('will-quit', () => {
+  if (adbProcess) {
+    console.log('Encerrando o processo ADB...');
+    adbProcess.kill('SIGINT');
+  }
 });
